@@ -1,5 +1,4 @@
 const { Schema, model } = require('mongoose');
-const bcrypt = require('bcrypt');
 
 const dataSourceSchema = new Schema({
     source: {
@@ -20,6 +19,7 @@ const dataSourceSchema = new Schema({
     author: {
         type: Schema.Types.ObjectId,
         ref: 'User',
+        required: true,
     },
 })
 

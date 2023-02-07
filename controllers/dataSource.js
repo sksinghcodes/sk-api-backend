@@ -3,15 +3,17 @@ const jwt = require('jsonwebtoken');
 
 exports.create = (req, res) => {
     const dataSource = new DataSource(req.body)
+    dataSource.author = req.userId;
     const key = jwt.sign({dataSource:JSON.stringify(dataSource)}, process.env.JWT_SECRET_KEY);
     dataSource.key = key;
+    
     dataSource.save()
         .then(response => {
             res.json({
                 success: true,
                 message: `New data-source "${response.source}" added`,
             })
-        }) 
+        })
         .catch(err => {
             res.json({
                 success: false,
@@ -36,8 +38,20 @@ exports.getOne = (req, res) => {
 }
 
 exports.getAll = (req, res) => {
-    // ...
-    res.send('dd')
+    DataSource.find({author: req.userId})
+        .then(dataSources => {
+            res.json({
+                success: true,
+                dataSources: dataSources
+            })
+        })
+        .catch(err => {
+            console.log(err)
+            res.json({
+                success: false,
+                error: err
+            })
+        })
 }
 
 exports.update = (req, res) => {
