@@ -17,20 +17,29 @@ const setTokenOnResponse = (res, userId) => {
 
 exports.signUp = (req, res) => {
     const newUser = new User(req.body);
-    newUser.save()
-        .then(user => {
-            setTokenOnResponse(res, user._id)
-            res.json({
-                success: true,
-                message: 'Sign up successful',
-            });
-        })
-        .catch(err => {
-            res.json({
-                success: false,
-                error: err,
-            });
+
+    // newUser.save()
+    //     .then(user => {
+    //         setTokenOnResponse(res, user._id)
+    //         res.json({
+    //             success: true,
+    //             message: 'Sign up successful',
+    //         });
+    //     })
+    //     .catch(err => {
+    //         res.json({
+    //             success: false,
+    //             error: err,
+    //         });
+    //     });
+
+    setTimeout(() => {
+        res.json({
+            success: false,
+            error: 'err',
         });
+    }, 3000)
+    
 }
 
 exports.signIn = (req, res) => {
@@ -60,9 +69,10 @@ exports.signIn = (req, res) => {
 }
 
 exports.checkUnique = (req, res) => {
-    const { key, value } = req.params;
-    if( key === 'username' || key === 'email' ){
-        User.findOne({[key]: value}).then(user => {
+    console.log(req.query)
+    if(req.query.hasOwnProperty('email') || req.query.hasOwnProperty('username')){
+        User.findOne(req.query).then(user => {
+            console.log(user)
             if(user){
                 res.json({
                     success: true,

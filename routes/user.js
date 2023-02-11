@@ -7,12 +7,13 @@ const {
     checkLoggedInStatus,
     checkUnique,
 } = require('../controllers/user');
+const { validateSignUp } = require('../middlewares/validate');
 
-router.post('/sign-up', signUp);
+router.post('/sign-up', validateSignUp, signUp);
 router.post('/sign-in', signIn);
 router.post('/sign-out', isAuthenticated, signOut);
 router.get('/check-signed-in-status', isAuthenticated, checkLoggedInStatus);
 router.get('/check-signed-in-status', isAuthenticated, checkLoggedInStatus);
-router.get('/check-unique/:key/:value', checkUnique)
+router.get('/check-unique', checkUnique)
 
 module.exports = router;
