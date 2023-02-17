@@ -7,10 +7,10 @@ const {
     checkLoggedInStatus,
     checkUnique,
 } = require('../controllers/user');
-const { validateSignUp } = require('../middlewares/validate');
+const { validateSignUp, validateSignIn } = require('../middlewares/validate');
 
 router.post('/sign-up', validateSignUp, signUp);
-router.post('/sign-in', signIn);
+router.post('/sign-in', validateSignIn, signIn);
 router.post('/sign-out', isAuthenticated, signOut);
 router.get('/check-signed-in-status', isAuthenticated, checkLoggedInStatus);
 router.get('/check-signed-in-status', isAuthenticated, checkLoggedInStatus);

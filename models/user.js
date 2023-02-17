@@ -4,7 +4,6 @@ const bcrypt = require('bcrypt');
 const userSchema = new Schema({
     firstName: {
         type: String,
-        required: true,
         maxLength: 50,
         trim: true,
     },
@@ -22,19 +21,28 @@ const userSchema = new Schema({
     },
     email: {
         type: String,
-        trim: true,
-        required: true,
         unique: true,
+        required: true,
+        trim: true,
     },
     password: {
         type: String,
         required: true,
         set: password => bcrypt.hashSync(password, 12),
     },
+    verificationCode: {
+        type: String,
+        default: ''
+    },
+    isVerified: {
+        type: Boolean,
+        default: false,
+    },
     dataSources: [{
         type: Schema.Types.ObjectId,
         ref: 'DataSource',
     }],
+    
     role: {
         type: Number,
         default: 1,

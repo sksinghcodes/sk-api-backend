@@ -1,11 +1,11 @@
 const User = require('../models/user');
+const Verification = require('../models/verification');
 const jwt = require('jsonwebtoken');
 
 const setTokenOnResponse = (res, userId) => {
     const token = jwt.sign(
         {userId: userId}, 
-        process.env.JWT_SECRET_KEY, 
-        { expiresIn: '1h' }
+        process.env.JWT_SECRET_KEY
     );
 
     res.cookie('jwt-token', token, {
@@ -16,41 +16,41 @@ const setTokenOnResponse = (res, userId) => {
 } 
 
 exports.signUp = (req, res) => {
-    const newUser = new User(req.body);
+    const userData = { username, email, password } = req.body;
+    const newUser = new User(userData);
+    const newVerification = new Verification({user: newUser._id});
 
-    // newUser.save()
-    //     .then(user => {
-    //         setTokenOnResponse(res, user._id)
-    //         res.json({
-    //             success: true,
-    //             message: 'Sign up successful',
-    //         });
-    //     })
-    //     .catch(err => {
-    //         res.json({
-    //             success: false,
-    //             error: err,
-    //         });
-    //     });
-
-    setTimeout(() => {
-        res.json({
-            success: false,
-            error: 'err',
+    newUser.save()
+        .then(user => {
+            setTokenOnResponse(res, user._id)
+            res.json({
+                success: true,
+                message: 'Sign up successful',
+                verificationId: newVerification._id
+            });
+        })
+        .catch(err => {
+            console.log(err)
+            res.json({
+                success: false,
+                error: err._message,
+            });
         });
-    }, 3000)
-    
+}
+
+exports.verifyProfile = (req, res) => {
+
 }
 
 exports.signIn = (req, res) => {
     const { usernameOrEmail, password } = req.body;
-    
+
     User.findOne({$or: [{username: usernameOrEmail}, {email: usernameOrEmail}]})
-        .then(user => {
-            return [user.authenticate(password), user]
+        .then(async user => {
+            return [await user?.authenticate(password), user]
         })
         .then(([result, user]) => {
-            if(result) {
+            if(result && user) {
                 setTokenOnResponse(res, user._id)
                 res.json({
                     success: true,
@@ -59,17 +59,23 @@ exports.signIn = (req, res) => {
             } else {
                 res.json({
                     success: false,
-                    error: {
-                        message: 'Wrong credentials'
-                    },
+                    error: 'Invalid credentials',
                 });
             }
         })
-        .catch(error => res.json(error));
+        .catch(error => {
+            res.json({
+                success: false,
+                error: error._message,
+            })
+        });
 }
 
 exports.checkUnique = (req, res) => {
-    console.log(req.query)
+    // if profile not found, return true
+    // if profile found but is not verified, delete profile and return true,
+    // if profile found, return false
+
     if(req.query.hasOwnProperty('email') || req.query.hasOwnProperty('username')){
         User.findOne(req.query).then(user => {
             console.log(user)
@@ -105,11 +111,10 @@ exports.checkLoggedInStatus = (req, res) => {
 }
 
 exports.signOut = (req, res) => {
-    res.clearCookie('jwt-token');
-
-    res.cookie('jwt-token', 'none', {
-        expires: new Date(Date.now() + 10 * 1000),
-        httpOnly: true
+    res.cookie('jwt-token', '', {
+        expires: new Date(0),
+        httpOnly: true,
+        sameSite: 'None',
     }).status(200).json({
         success: true,
         message: "User sign out was successful"
