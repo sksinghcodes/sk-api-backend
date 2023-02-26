@@ -15,11 +15,9 @@ const isAuthenticated = require('./middlewares/isAuthenticated');
 
 connectToDB();
 
-
 app.use(express.json());
 app.use(cookieParser());
 app.use(checkDBConnection);
-
 
 app.use('/api/user/', checkClient, userRoutes);
 app.use('/api/data-source/', checkClient, isAuthenticated, dataSourceRoutes);

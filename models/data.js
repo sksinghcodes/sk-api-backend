@@ -1,16 +1,15 @@
 const { Schema, model } = require('mongoose');
 
 const dataSchema = new Schema({
-    author: {
-        type: Schema.Types.ObjectId,
-        ref: 'User',
+    userId: {
+        type: String,
         required: true,
     },
-    dataSource: {
-        type: Schema.Types.ObjectId,
-        ref: 'DataSource',
+    dataSourceId: {
+        type: String,
         required: true,
     }
 }, { strict: false });
 
-module.exports = model('Data', dataSchema);
+const DataModel = model('Data', dataSchema);
+module.exports = DataModel;

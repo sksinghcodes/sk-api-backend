@@ -1,6 +1,8 @@
 const User = require('../models/user');
-const Verification = require('../models/verification');
+const ConfirmationCode = require('../models/confirmationCode');
+const { Purpose, nextTenMinutes } = require('../models/confirmationCode');
 const jwt = require('jsonwebtoken');
+const sendMail = require('../email/sendMail');
 
 const setTokenOnResponse = (res, userId) => {
     const token = jwt.sign(
@@ -18,19 +20,31 @@ const setTokenOnResponse = (res, userId) => {
 exports.signUp = (req, res) => {
     const userData = { username, email, password } = req.body;
     const newUser = new User(userData);
-    const newVerification = new Verification({user: newUser._id});
+    const newConfirmationCode = new ConfirmationCode({
+        userId: newUser._id,
+        purpose: Purpose.PROFILE_VERIFICATION,
+        expirationDate: nextTenMinutes(),
+    });
 
     newUser.save()
-        .then(user => {
-            setTokenOnResponse(res, user._id)
+        .then(() => newConfirmationCode.save())
+        .then(() => {
+            const text = `Your profile verification code is ${newConfirmationCode.code}. It will expire in next 10 minutes`;
+            const html = `<p>${text}</p>`;
+            return sendMail({
+                receivers: [newUser.email],
+                subject: 'Profile verification code',
+                text: text,
+                html: html,
+            })
+        })
+        .then(() => {
             res.json({
                 success: true,
-                message: 'Sign up successful',
-                verificationId: newVerification._id
+                confirmationCodeId: newConfirmationCode._id,
             });
         })
         .catch(err => {
-            console.log(err)
             res.json({
                 success: false,
                 error: err._message,
@@ -38,19 +52,39 @@ exports.signUp = (req, res) => {
         });
 }
 
-exports.verifyProfile = (req, res) => {
-
-}
-
 exports.signIn = (req, res) => {
     const { usernameOrEmail, password } = req.body;
 
     User.findOne({$or: [{username: usernameOrEmail}, {email: usernameOrEmail}]})
         .then(async user => {
-            return [await user?.authenticate(password), user]
+            return [await user?.authenticate(password), user];
         })
         .then(([result, user]) => {
-            if(result && user) {
+            if (user && !user.isVerified){
+                const newConfirmationCode = new ConfirmationCode({
+                    userId: user._id,
+                    purpose: Purpose.PROFILE_VERIFICATION,
+                    expirationDate: nextTenMinutes(),
+                });
+                newConfirmationCode.save().then(async confirmationCode => {
+                    const text = `Your profile verification code is ${confirmationCode.code}. It will expire in next 10 minutes`;
+                    const html = `<p>${text}</p>`;
+                    return [
+                        await sendMail({
+                            receivers: [user.email],
+                            subject: 'Profile verification code',
+                            text: text,
+                            html: html,
+                        }),
+                        confirmationCode
+                    ];
+                }).then(([info, confirmationCode]) => {
+                    res.json({
+                        success: true,
+                        confirmationCodeId: confirmationCode._id,
+                    });
+                })
+            } else if (user && user.isVerified && result) {
                 setTokenOnResponse(res, user._id)
                 res.json({
                     success: true,
@@ -64,21 +98,163 @@ exports.signIn = (req, res) => {
             }
         })
         .catch(error => {
+            console.log(error)
             res.json({
                 success: false,
-                error: error._message,
+                error: error.message,
             })
         });
 }
 
-exports.checkUnique = (req, res) => {
+exports.getPasswordResetId = (req, res) => {
+    const email = req.query.email;
+    if(!email.trim()){
+        res.json({
+            success: false,
+            error: 'Please enter email'
+        })
+        return;
+    }
+
+    User.findOne({email: email}).then(async user => {
+        if(user) {
+            const newConfirmationCode = new ConfirmationCode({
+                userId: user._id,
+                purpose: Purpose.PASSWORD_RESET,
+                expirationDate: nextTenMinutes(),
+            })
+            newConfirmationCode.save().then(confirmationCode => {
+                const text = `Your password reset code is ${confirmationCode.code}. It will expire in next 10 minutes`;
+                const html = `<p>${text}</p>`;
+                return sendMail({
+                    receivers: [user.email],
+                    subject: 'Code for resetting password',
+                    text: text,
+                    html: html,
+                })
+            }).then(() => {
+                res.json({
+                    success: true,
+                    passwordResetId: newConfirmationCode._id,
+                })
+            }).catch(() => {
+                console.log(error);
+                res.json({
+                    success: false,
+                    error: error._message,
+                })
+            })
+
+        } else {
+            res.json({
+                success: false,
+                error: 'This email address is not used in any profile',
+            })
+        }
+  
+    }).catch(error => {
+        console.log(error)
+        res.json({
+            success: false,
+            error: error._message,
+        })
+    })
+}
+
+exports.resetPassword = (req, res) => {
+    const { passwordResetId, code, newPassword } = req.body;
+    ConfirmationCode.findById(passwordResetId).then(confirmationCode => {
+        if(confirmationCode && confirmationCode.code === code && new Date(confirmationCode.expirationDate) < new Date(Date.now())){
+            res.json({
+                success: false,
+                error: 'Profile verification code expired',
+            })
+        } else if (confirmationCode && confirmationCode.code === code) {
+            User.findOneAndUpdate({_id: confirmationCode.userId}, {
+                isVerified: true,
+                password: newPassword,
+            }).then(() => {
+                return ConfirmationCode.findByIdAndDelete(passwordResetId)
+            }).then(() => {
+                res.json({
+                    success: true,
+                    message: 'Password reset successful',
+                });
+            }).catch(error => {
+                console.log(error);
+                res.json({
+                    success: false,
+                    error: error._message,
+                });
+            });
+
+        } else {
+            res.json({
+                success: false,
+                error: 'Confirmation code incorrect',
+            });
+        }
+
+    }).catch(error => {
+        console.log(error);
+        res.json({
+            success: false,
+            error: error._message,
+        });
+    });
+}
+
+exports.verifyProfile = (req, res) => {
+    console.log(req.body);
+    ConfirmationCode.findOne({_id: req.body.confirmationCodeId})
+    .then(confirmationCode => {
+        if(confirmationCode && new Date(confirmationCode.expirationDate) < new Date(Date.now())) {
+            res.json({
+                success: false,
+                error: 'Profile verification code expired',
+            })
+        } else if(
+            confirmationCode &&
+            confirmationCode.purpose === Purpose.PROFILE_VERIFICATION &&
+            confirmationCode.code === String(req.body.code)
+        ){
+            ConfirmationCode.findByIdAndDelete(confirmationCode._id).then(() => {
+                return User.findOneAndUpdate({_id: confirmationCode.userId}, {isVerified: true})
+            }).then(() => {
+                res.json({
+                    success: true,
+                })
+            }).catch(() => {
+                res.json({
+                    success: false,
+                    error: 'Something went wrong',
+                })
+            });
+        } else {
+            res.json({
+                success: false,
+                error: 'Verification code did not match',
+            });
+        }
+    }).catch(err => {
+        res.json({
+            success: false,
+            error: err._message,
+        })
+    })
+}
+
+
+
+
+
+exports.checkUnique = async (req, res) => {
     // if profile not found, return true
     // if profile found but is not verified, delete profile and return true,
     // if profile found, return false
 
     if(req.query.hasOwnProperty('email') || req.query.hasOwnProperty('username')){
         User.findOne(req.query).then(user => {
-            console.log(user)
             if(user){
                 res.json({
                     success: true,
@@ -115,6 +291,7 @@ exports.signOut = (req, res) => {
         expires: new Date(0),
         httpOnly: true,
         sameSite: 'None',
+        secure: true,
     }).status(200).json({
         success: true,
         message: "User sign out was successful"

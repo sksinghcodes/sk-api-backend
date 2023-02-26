@@ -30,19 +30,10 @@ const userSchema = new Schema({
         required: true,
         set: password => bcrypt.hashSync(password, 12),
     },
-    verificationCode: {
-        type: String,
-        default: ''
-    },
     isVerified: {
         type: Boolean,
         default: false,
     },
-    dataSources: [{
-        type: Schema.Types.ObjectId,
-        ref: 'DataSource',
-    }],
-    
     role: {
         type: Number,
         default: 1,
@@ -53,4 +44,6 @@ userSchema.methods.authenticate = function(password) {
     return bcrypt.compare(password, this.password);
 }
 
-module.exports = model('User', userSchema);
+const UserModel = model('User', userSchema)
+
+module.exports = UserModel;

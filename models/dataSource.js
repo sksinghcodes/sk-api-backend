@@ -16,11 +16,11 @@ const dataSourceSchema = new Schema({
         required: true,
         trim: true,
     },
-    author: {
-        type: Schema.Types.ObjectId,
-        ref: 'User',
+    userId: {
+        type: String,
         required: true,
     },
 })
 
-module.exports = model('DataSource', dataSourceSchema);
+const DataSourceModel = model('DataSource', dataSourceSchema);
+module.exports = DataSourceModel;
