@@ -20,6 +20,8 @@ const dataSourceSchema = new Schema({
         type: String,
         required: true,
     },
+}, {
+    timestamps: true,
 })
 
 const DataSourceModel = model('DataSource', dataSourceSchema);

@@ -1,44 +1,36 @@
 const DataSource = require('../models/dataSource');
+const Data = require('../models/data');
 const jwt = require('jsonwebtoken');
 
 exports.create = (req, res) => {
     const dataSource = new DataSource(req.body)
-    dataSource.author = req.userId;
+    dataSource.userId = req.userId;
     const key = jwt.sign({dataSource:JSON.stringify(dataSource)}, process.env.JWT_SECRET_KEY);
     dataSource.key = key;
     
     dataSource.save()
-        .then(response => {
+        .then(() => {
+            return DataSource.find({userId: req.userId})
+                .select(['-userId', '-updatedAt', '-__v'])
+        })
+        .then(dataSources => {
             res.json({
                 success: true,
-                message: `New data-source "${response.source}" added`,
+                message: "New data-source added",
+                dataSources: dataSources
             })
         })
         .catch(err => {
             res.json({
                 success: false,
-                message: `Something went wrong`,
-            })
-        })
-}
-
-exports.getOne = (req, res) => {
-    DataSource.findOne({id:req.params.id, author: req.userId})
-        .then(dataSource => {
-            res.json({
-                success: true,
-                dataSource: dataSource,
-            })
-        }).catch(err => {
-            res.json({
-                success: false,
-                message: `Not Found`,
+                message: err,
             })
         })
 }
 
 exports.getAll = (req, res) => {
-    DataSource.find({author: req.userId})
+    DataSource.find({userId: req.userId})
+        .select(['-userId', '-updatedAt', '-__v'])
         .then(dataSources => {
             res.json({
                 success: true,
@@ -54,12 +46,31 @@ exports.getAll = (req, res) => {
         })
 }
 
-exports.update = (req, res) => {
-    // ...
-    res.send('dd')
-}
-
 exports.remove = (req, res) => {
-    // ...
-    res.send('dd')
+    Promise.all([
+        DataSource.findOneAndDelete({userId: req.userId, _id: req.params.id}),
+        Data.deleteMany({userId: req.userId, dataSourceId: req.params.id}),
+    ]).then(async result => {
+        const dataSources = await DataSource.find({userId: req.userId})
+        .select(['-userId', '-updatedAt', '-__v'])
+
+        if(result[0], result[1].acknowledged){
+            res.json({
+                success: true,
+                message: 'Datasource deleted successfully',
+                dataSources: dataSources,
+            })
+        } else {
+            res.json({
+                success: false,
+                error: 'Something went wrong',
+            })
+        }
+        
+    }).catch(error => {
+        res.json({
+            success: false,
+            error: error,
+        })
+    })
 }

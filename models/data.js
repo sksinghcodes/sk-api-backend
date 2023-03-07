@@ -9,7 +9,8 @@ const dataSchema = new Schema({
         type: String,
         required: true,
     }
-}, { strict: false });
+},
+{ strict: false, timestamps: true });
 
 const DataModel = model('Data', dataSchema);
 module.exports = DataModel;

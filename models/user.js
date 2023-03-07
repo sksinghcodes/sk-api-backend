@@ -2,16 +2,6 @@ const { Schema, model } = require('mongoose');
 const bcrypt = require('bcrypt');
 
 const userSchema = new Schema({
-    firstName: {
-        type: String,
-        maxLength: 50,
-        trim: true,
-    },
-    lastName: {
-        type: String,
-        maxLength: 50,
-        trim: true,
-    },
     username: {
         type: String,
         maxLength: 50,
@@ -38,6 +28,8 @@ const userSchema = new Schema({
         type: Number,
         default: 1,
     },
+}, {
+    timestamps: true,
 })
 
 userSchema.methods.authenticate = function(password) {

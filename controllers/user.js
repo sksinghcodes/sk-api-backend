@@ -181,7 +181,6 @@ exports.resetPassword = (req, res) => {
                     message: 'Password reset successful',
                 });
             }).catch(error => {
-                console.log(error);
                 res.json({
                     success: false,
                     error: error._message,
@@ -205,8 +204,7 @@ exports.resetPassword = (req, res) => {
 }
 
 exports.verifyProfile = (req, res) => {
-    console.log(req.body);
-    ConfirmationCode.findOne({_id: req.body.confirmationCodeId})
+    ConfirmationCode.findOne({_id: req.body.verificationId})
     .then(confirmationCode => {
         if(confirmationCode && new Date(confirmationCode.expirationDate) < new Date(Date.now())) {
             res.json({
@@ -237,6 +235,7 @@ exports.verifyProfile = (req, res) => {
             });
         }
     }).catch(err => {
+        console.log(err)
         res.json({
             success: false,
             error: err._message,
@@ -277,7 +276,7 @@ exports.checkUnique = async (req, res) => {
 
 exports.checkLoggedInStatus = (req, res) => {
     User.findOne({id: req.useId})
-        .select(['firstName', 'lastName', 'username', 'email', 'role'])
+        .select(['username', 'email', 'role'])
         .then(user => {
             res.json({
                 success: true,
