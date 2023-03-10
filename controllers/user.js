@@ -248,10 +248,6 @@ exports.verifyProfile = (req, res) => {
 
 
 exports.checkUnique = async (req, res) => {
-    // if profile not found, return true
-    // if profile found but is not verified, delete profile and return true,
-    // if profile found, return false
-
     if(req.query.hasOwnProperty('email') || req.query.hasOwnProperty('username')){
         User.findOne(req.query).then(user => {
             if(user){
@@ -275,7 +271,7 @@ exports.checkUnique = async (req, res) => {
 }
 
 exports.checkLoggedInStatus = (req, res) => {
-    User.findOne({id: req.useId})
+    User.findOne({_id: req.userId})
         .select(['username', 'email', 'role'])
         .then(user => {
             res.json({
