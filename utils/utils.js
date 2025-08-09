@@ -1,4 +1,4 @@
-export const getDateDetails = (date) => {
+exports.getDateDetails = (date) => {
   let isLastDate = false;
   let getMonthlyTasksFrom = [];
   let getYearlyTasksFrom = [];
@@ -32,7 +32,7 @@ export const getDateDetails = (date) => {
   };
 };
 
-export const validateDate = (dateStr) => {
+exports.validateDate = (dateStr) => {
   const [y, m, d] = dateStr.split("_");
   const [yn, mn, dn] = [Number(y), Number(m), Number(d)];
   const isValidDate = mn >= 1 && mn <= 31;
