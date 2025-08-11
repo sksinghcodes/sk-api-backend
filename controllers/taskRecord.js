@@ -58,9 +58,16 @@ exports.create = async (req, res) => {
       });
     }
 
-    await new TaskRecord(taskRecordData).save();
+    const newTaskRecord = await new TaskRecord(taskRecordData).save();
 
-    return res.json({ success: true, message: "Task completion recorded" });
+    const newTaskObj = newTaskRecord.toObject();
+    delete newTaskObj.userId;
+    delete newTaskObj.__v;
+    return res.json({
+      success: true,
+      message: "Task completion recorded",
+      taskRecord: newTaskObj,
+    });
   } catch (e) {
     console.error(e);
     return res.json({ success: false, error: e.message });
@@ -97,6 +104,10 @@ exports.update = async (req, res) => {
       { new: true }
     );
 
+    const newTaskObj = updated.toObject();
+    delete newTaskObj.userId;
+    delete newTaskObj.__v;
+
     if (!updated) {
       return res.json({
         success: false,
@@ -107,6 +118,7 @@ exports.update = async (req, res) => {
     return res.json({
       success: true,
       message: "Record updated",
+      taskRecord: newTaskObj,
     });
   } catch (e) {
     console.error(e);
