@@ -35,8 +35,8 @@ exports.getDateDetails = (date) => {
 exports.validateDate = (dateStr) => {
   const [y, m, d] = dateStr.split("_");
   const [yn, mn, dn] = [Number(y), Number(m), Number(d)];
-  const isValidDate = mn >= 1 && mn <= 31;
-  const isValidMonth = dn >= 1 && dn <= 12;
+  const isValidDate = dn >= 1 && dn <= 31;
+  const isValidMonth = mn >= 1 && mn <= 12;
 
   if (
     typeof dateStr !== "string" ||
