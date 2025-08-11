@@ -64,9 +64,9 @@ const taskSchema = new Schema(
       required: true,
     },
     autoRemoveDate: { type: Number, default: null },
-    active: {
+    deleted: {
       type: Boolean,
-      default: true,
+      default: false,
     },
   },
   { timestamps: true }

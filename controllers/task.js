@@ -1,6 +1,6 @@
 const { RECURRENCE, INVALID_DATE_STRATEGY } = require("../constants");
 const Task = require("../models/task");
-const taskRecord = require("../models/taskRecord");
+const TaskRecord = require("../models/taskRecord");
 const { getDateDetails, validateDate } = require("../utils/utils");
 const { getTaskRecords } = require("./taskRecord");
 
@@ -60,16 +60,48 @@ exports.getAll = async (req, res) => {
 
 exports.getOne = async (req, res) => {
   try {
-    const id = req.query.id;
-    const task = await Task.findById(id).select(["-userId", "-__v"]);
+    const taskId = req.query.taskId;
+    const recordDate = req.query.recordDate;
+    let date;
+    let taskRecord;
+
+    if (recordDate) {
+      const validatedDate = validateDate(recordDate);
+      if (!validatedDate.isValid) {
+        return res.json({
+          success: false,
+          error: validatedDate.message,
+        });
+      } else {
+        date = validatedDate.date;
+      }
+    }
+
+    if (recordDate) {
+      taskRecord = await TaskRecord.findOne({ taskId, taskDate: date }).select([
+        "-userId",
+        "-__v",
+      ]);
+    }
+
+    const task = await Task.findOne({ _id: taskId }).select([
+      "-userId",
+      "-__v",
+    ]);
 
     if (!task) {
       throw new Error("Task not found");
     }
 
+    const taskObj = task.toObject();
+
+    if (recordDate) {
+      taskObj.taskRecord = taskRecord;
+    }
+
     res.json({
       success: true,
-      task: task,
+      task: taskObj,
     });
   } catch (e) {
     console.log(e);
@@ -163,7 +195,10 @@ exports.getByDate = async (req, res) => {
       ];
     });
 
-    const tasks = await Task.find({ $or: options }).select(["-userId", "-__v"]);
+    const tasks = await Task.find({ $or: options, deleted: false }).select([
+      "-userId",
+      "-__v",
+    ]);
     const taskRecordsMap = {};
     const taskIds = tasks.map((t) => t._id.toString());
 
@@ -195,6 +230,47 @@ exports.getByDate = async (req, res) => {
       success: true,
       tasks: tasksCopy,
     });
+  } catch (e) {
+    console.log(e);
+    res.status(500).json({
+      success: false,
+      error: e.message,
+    });
+  }
+};
+
+exports.removeTask = async (req, res) => {
+  try {
+    const taskId = req.query.taskId;
+
+    if (!taskId) {
+      return res.json({
+        success: false,
+        error: "Missing 'taskId'",
+      });
+    }
+
+    const exists = await TaskRecord.exists({ taskId });
+
+    let deleted;
+
+    if (exists) {
+      deleted = await Task.findByIdAndUpdate(taskId, { deleted: true });
+    } else {
+      deleted = await Task.findByIdAndDelete(taskId);
+    }
+
+    if (deleted) {
+      res.json({
+        success: true,
+        message: "deleted successfully",
+      });
+    } else {
+      res.json({
+        success: false,
+        error: "deletion failed",
+      });
+    }
   } catch (e) {
     console.log(e);
     res.status(500).json({
