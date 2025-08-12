@@ -44,6 +44,7 @@ exports.getAll = async (req, res) => {
   try {
     const tasks = await Task.find({
       userId: req.userId,
+      deleted: false,
     }).select(["-userId", "-__v"]);
     res.json({
       success: true,
