@@ -6,30 +6,155 @@ const { getTaskRecords } = require("./taskRecord");
 
 exports.create = async (req, res) => {
   try {
-    const taskData = ({
+    const {
       name,
       description,
       schedule,
       scheduleStartTime,
       scheduleEndTime,
       category,
-      categoryWeightTrainingTargetReps,
-      categoryWeightTrainingTargetSets,
       recurrence,
       recurrenceValues,
       recurrenceInvalidDateStrategy,
       autoRemove,
       autoRemoveDate,
-    } = req.body);
+    } = req.body;
+
+    const taskData = {
+      name,
+      description,
+      schedule,
+      scheduleStartTime,
+      scheduleEndTime,
+      category,
+      recurrence,
+      recurrenceValues,
+      recurrenceInvalidDateStrategy,
+      autoRemove,
+      autoRemoveDate,
+    };
 
     taskData.userId = req.userId;
+    const taskDoc = await new Task(taskData).save();
+    const task = taskDoc.toObject();
 
-    const task = new Task(taskData);
+    delete task.__v;
+    delete task.userId;
 
-    await task.save();
     res.json({
       success: true,
       message: "New task created",
+      task: task,
+    });
+  } catch (e) {
+    console.log(e);
+    res.json({
+      success: false,
+      error: e.message,
+    });
+  }
+};
+
+exports.update = async (req, res) => {
+  try {
+    const taskId = req.query.taskId;
+
+    if (!taskId) {
+      return res.json({
+        success: false,
+        error: "Missing 'taskId'",
+      });
+    }
+
+    const task = await Task.findOne({
+      _id: taskId,
+      userId: req.userId,
+    }).lean();
+
+    if (!task) {
+      return res.json({ success: false, error: "Task not found" });
+    }
+
+    const {
+      name,
+      description,
+      schedule,
+      scheduleStartTime,
+      scheduleEndTime,
+      category,
+      recurrence,
+      recurrenceValues,
+      recurrenceInvalidDateStrategy,
+      autoRemove,
+      autoRemoveDate,
+    } = req.body;
+
+    const existingRecPrimitive = Array.isArray(task.recurrenceValues)
+      ? task.recurrenceValues.sort().toString()
+      : null;
+    const recPrimitive = Array.isArray(recurrenceValues)
+      ? recurrenceValues.sort().toString()
+      : null;
+
+    if (
+      !task.allowEdit &&
+      ((category !== undefined && category !== task.category) ||
+        (recurrence !== undefined && recurrence !== task.recurrence) ||
+        (recurrenceValues !== undefined &&
+          recPrimitive !== existingRecPrimitive) ||
+        (recurrenceInvalidDateStrategy !== undefined &&
+          recurrenceInvalidDateStrategy !== task.recurrenceInvalidDateStrategy))
+    ) {
+      return res.json({
+        success: false,
+        message:
+          "Not allowed to change fields 'category', 'recurrence', 'recurrenceValues' and 'recurrenceInvalidDateStrategy' after the task has a record",
+      });
+    }
+
+    const taskData = {
+      name,
+      description,
+      schedule,
+      scheduleStartTime,
+      scheduleEndTime,
+      category,
+      recurrence,
+      recurrenceValues,
+      recurrenceInvalidDateStrategy,
+      autoRemove,
+      autoRemoveDate,
+    };
+
+    if (!task.allowEdit) {
+      delete taskData.category;
+      delete taskData.recurrence;
+      delete taskData.recurrenceValues;
+      delete taskData.recurrenceInvalidDateStrategy;
+    }
+
+    const updated = await Task.findOneAndUpdate(
+      { _id: taskId, userId: req.userId },
+      taskData,
+      {
+        new: true,
+      }
+    ).lean();
+
+    if (!updated) {
+      return res.json({
+        success: false,
+        error: "task update failed",
+      });
+    }
+
+    delete updated.__v;
+    delete updated.userId;
+
+    res.json({
+      success: true,
+      message: "task updated",
+      task: updated,
     });
   } catch (e) {
     console.log(e);
@@ -45,7 +170,9 @@ exports.getAll = async (req, res) => {
     const tasks = await Task.find({
       userId: req.userId,
       deleted: false,
-    }).select(["-userId", "-__v"]);
+    })
+      .select(["-userId", "-__v"])
+      .lean();
     res.json({
       success: true,
       tasks: tasks,
@@ -79,30 +206,26 @@ exports.getOne = async (req, res) => {
     }
 
     if (recordDate) {
-      taskRecord = await TaskRecord.findOne({ taskId, taskDate: date }).select([
-        "-userId",
-        "-__v",
-      ]);
+      taskRecord = await TaskRecord.findOne({ taskId, taskDate: date })
+        .lean()
+        .select(["-userId", "-__v"]);
     }
 
-    const task = await Task.findOne({ _id: taskId }).select([
-      "-userId",
-      "-__v",
-    ]);
+    const task = await Task.findOne({ _id: taskId })
+      .lean()
+      .select(["-userId", "-__v"]);
 
     if (!task) {
       throw new Error("Task not found");
     }
 
-    const taskObj = task.toObject();
-
     if (recordDate) {
-      taskObj.taskRecord = taskRecord;
+      task.taskRecord = taskRecord;
     }
 
     res.json({
       success: true,
-      task: taskObj,
+      task: task,
     });
   } catch (e) {
     console.log(e);
@@ -144,62 +267,65 @@ exports.getByDate = async (req, res) => {
       nextDate,
     } = getDateDetails(date);
 
-    const options = [
-      {
-        userId,
-        recurrence: RECURRENCE.DAILY,
-      },
-      {
-        userId,
-        recurrence: RECURRENCE.WEEKLY,
-        recurrenceValues: dayOfWeek,
-      },
-      {
-        userId,
-        recurrence: RECURRENCE.MONTHLY,
-        recurrenceValues: monthlyDate,
-      },
-      {
-        userId,
-        recurrence: RECURRENCE.YEARLY,
-        recurrenceValues: yearlyDate,
-      },
-    ];
-
-    getMonthlyTasksFrom.forEach((md) => {
-      options.push({
-        userId,
-        recurrence: RECURRENCE.MONTHLY,
-        recurrenceValues: md,
-        recurrenceInvalidDateStrategy: INVALID_DATE_STRATEGY.SHIFT,
-      });
-    });
-
-    getYearlyTasksFrom.forEach((yd) => {
-      options.push({
-        userId,
-        recurrence: RECURRENCE.YEARLY,
-        recurrenceValues: yd,
-        recurrenceInvalidDateStrategy: INVALID_DATE_STRATEGY.SHIFT,
-      });
-    });
-
-    options.forEach((option) => {
-      option.$and = [
-        { createdAt: { $lt: nextDate } },
+    const tasks = await Task.find({
+      userId,
+      deleted: false,
+      createdAt: { $lt: nextDate },
+      $or: [{ autoRemoveDate: null }, { autoRemoveDate: { $gte: dateEpoch } }],
+      $or: [
+        { recurrence: RECURRENCE.DAILY },
         {
+          recurrence: RECURRENCE.WEEKLY,
+          recurrenceValues: {
+            $elemMatch: {
+              $eq: dayOfWeek,
+            },
+          },
+        },
+        {
+          recurrence: RECURRENCE.MONTHLY,
           $or: [
-            { autoRemoveDate: null },
-            { autoRemoveDate: { $gte: dateEpoch } },
+            {
+              recurrenceValues: {
+                $elemMatch: {
+                  $eq: monthlyDate,
+                },
+              },
+            },
+            {
+              recurrenceInvalidDateStrategy: INVALID_DATE_STRATEGY.SHIFT,
+              recurrenceValues: {
+                $elemMatch: {
+                  $in: getMonthlyTasksFrom,
+                },
+              },
+            },
           ],
         },
-      ];
-    });
-
-    const tasks = await Task.find({ $or: options, deleted: false }).select([
-      "-userId",
-      "-__v",
-    ]);
+        {
+          recurrence: RECURRENCE.YEARLY,
+          $or: [
+            {
+              recurrenceValues: {
+                $elemMatch: {
+                  $eq: yearlyDate,
+                },
+              },
+            },
+            {
+              recurrenceInvalidDateStrategy: INVALID_DATE_STRATEGY.SHIFT,
+              recurrenceValues: {
+                $elemMatch: {
+                  $in: getYearlyTasksFrom,
+                },
+              },
+            },
+          ],
+        },
+      ],
+    })
+      .lean()
+      .select(["-userId", "-__v"]);
     const taskRecordsMap = {};
     const taskIds = tasks.map((t) => t._id.toString());
 
@@ -216,20 +342,16 @@ exports.getByDate = async (req, res) => {
       });
     }
 
-    tasks.forEach((t) => {
-      t.taskRecord = taskRecordsMap[t._id.toString()] || null;
-    });
-
-    const tasksCopy = tasks.map((t) => {
+    const tasksWithRecord = tasks.map((t) => {
       return {
-        ...t.toObject(),
+        ...t,
         taskRecord: taskRecordsMap[t._id.toString()] || null,
       };
     });
 
     res.json({
       success: true,
-      tasks: tasksCopy,
+      tasks: tasksWithRecord,
     });
   } catch (e) {
     console.log(e);

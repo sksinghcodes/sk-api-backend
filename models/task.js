@@ -68,6 +68,14 @@ const taskSchema = new Schema(
       type: Boolean,
       default: false,
     },
+    allowEdit: {
+      type: Boolean,
+      default: true,
+    },
+    taskRecord: {
+      type: Object,
+      default: null,
+    },
   },
   { timestamps: true }
 );

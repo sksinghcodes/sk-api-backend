@@ -45,28 +45,34 @@ exports.create = async (req, res) => {
       taskDate: dateValidity.date,
     };
 
-    const taskRecord = await TaskRecord.findOne({
+    const exists = await TaskRecord.exists({
       taskId,
       userId,
       taskDate: dateValidity.date,
     });
 
-    if (taskRecord) {
+    if (exists) {
       return res.json({
         success: false,
         error: "Record for this task on this date already exists",
       });
     }
 
-    const newTaskRecord = await new TaskRecord(taskRecordData).save();
+    const taskRecordDocument = await new TaskRecord(taskRecordData).save();
 
-    const newTaskObj = newTaskRecord.toObject();
-    delete newTaskObj.userId;
-    delete newTaskObj.__v;
+    await Task.updateOne(
+      { _id: taskId, allowEdit: true },
+      { $set: { allowEdit: false } }
+    );
+
+    const taskRecord = taskRecordDocument.toObject();
+    delete taskRecord.userId;
+    delete taskRecord.__v;
+
     return res.json({
       success: true,
       message: "Task completion recorded",
-      taskRecord: newTaskObj,
+      taskRecord: taskRecord,
     });
   } catch (e) {
     console.error(e);
@@ -102,11 +108,9 @@ exports.update = async (req, res) => {
       { _id: recordId, userId: req.userId },
       { $set: taskRecordData },
       { new: true }
-    );
-
-    const newTaskObj = updated.toObject();
-    delete newTaskObj.userId;
-    delete newTaskObj.__v;
+    )
+      .lean()
+      .select(["-userId", "-__v"]);
 
     if (!updated) {
       return res.json({
@@ -118,7 +122,7 @@ exports.update = async (req, res) => {
     return res.json({
       success: true,
       message: "Record updated",
-      taskRecord: newTaskObj,
+      taskRecord: updated,
     });
   } catch (e) {
     console.error(e);
