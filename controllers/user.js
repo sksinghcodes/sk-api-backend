@@ -109,7 +109,10 @@ exports.signIn = (req, res) => {
     });
 };
 
-exports.getPasswordResetId = (req, res) => {
+exports.getPasswordResetId = async (req, res) => {
+  try {
+
+  
   const email = req.query.email;
   if (!email.trim()) {
     res.json({
@@ -119,53 +122,48 @@ exports.getPasswordResetId = (req, res) => {
     return;
   }
 
-  User.findOne({ email: email })
-    .then(async (user) => {
-      if (user) {
-        const newConfirmationCode = new ConfirmationCode({
-          userId: user._id,
-          purpose: Purpose.PASSWORD_RESET,
-          expirationDate: nextTenMinutes(),
-        });
-        newConfirmationCode
-          .save()
-          .then((confirmationCode) => {
-            const text = `Your password reset code is ${confirmationCode.code}. It will expire in next 10 minutes`;
-            const html = `<p>${text}</p>`;
-            return sendMail({
-              receivers: [user.email],
-              subject: "Code for resetting password",
-              text: text,
-              html: html,
-            });
-          })
-          .then(() => {
-            res.json({
-              success: true,
-              passwordResetId: newConfirmationCode._id,
-            });
-          })
-          .catch(() => {
-            console.log(error);
-            res.json({
-              success: false,
-              error: error._message,
-            });
-          });
-      } else {
-        res.json({
-          success: false,
-          error: "This email address is not used in any profile",
-        });
-      }
-    })
-    .catch((error) => {
-      console.log(error);
-      res.json({
-        success: false,
-        error: error._message,
-      });
+  const user = await User.findOne({ email: email });
+
+  if(!user) {
+    res.json({
+      success: false,
+      error: "This email address is not used in any profile",
     });
+    return;
+  }
+
+  const newConfirmationCode = new ConfirmationCode({
+    userId: user._id,
+    purpose: Purpose.PASSWORD_RESET,
+    expirationDate: nextTenMinutes(),
+  }); 
+
+  const confirmationCode = await newConfirmationCode.save();
+
+  const text = `Your password reset code is ${confirmationCode.code}. It will expire in next 10 minutes`;
+  const html = `<p>${text}</p>`;
+  const sent = await sendMail({
+    receivers: [user.email],
+    subject: "Code for resetting password",
+    text: text,
+    html: html,
+  });
+
+  res.json({
+    success: true,
+    passwordResetId: newConfirmationCode._id,
+  });
+
+  return;
+
+  } catch (e) {
+    console.log(e);
+    res.json({
+      success: false,
+      error: e,
+    });
+    return;
+  }
 };
 
 exports.resetPassword = (req, res) => {
