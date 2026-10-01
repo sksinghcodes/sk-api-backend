@@ -1,31 +1,31 @@
-const { Schema, model } = require("mongoose");
+import { Schema, model } from 'mongoose';
 
 const dataSourceSchema = new Schema(
   {
     source: {
       type: String,
       required: true,
-      trim: true,
+      trim: true
     },
     headings: {
       type: [String],
-      required: true,
+      required: true
     },
     key: {
       type: String,
       unique: true,
       required: true,
-      trim: true,
+      trim: true
     },
     userId: {
       type: String,
-      required: true,
-    },
+      required: true
+    }
   },
   {
-    timestamps: true,
+    timestamps: true
   }
 );
 
-const DataSourceModel = model("DataSource", dataSourceSchema);
-module.exports = DataSourceModel;
+const DataSourceModel = model('DataSource', dataSourceSchema);
+export default DataSourceModel;

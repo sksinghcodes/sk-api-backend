@@ -1,6 +1,6 @@
-const router = require("express").Router();
-const isAuthenticated = require("../middlewares/isAuthenticated");
-const {
+import express from 'express';
+import isAuthenticated from '../middlewares/isAuthenticated';
+import {
   signUp,
   signIn,
   signOut,
@@ -8,17 +8,19 @@ const {
   checkUnique,
   verifyProfile,
   getPasswordResetId,
-  resetPassword,
-} = require("../controllers/user");
-const { validateSignUp, validateSignIn } = require("../middlewares/validate");
+  resetPassword
+} from '../controllers/user';
+import { validateSignUp, validateSignIn } from '../middlewares/validate';
 
-router.post("/sign-up", validateSignUp, signUp);
-router.post("/sign-in", validateSignIn, signIn);
-router.post("/sign-out", isAuthenticated, signOut);
-router.get("/check-signed-in-status", isAuthenticated, checkLoggedInStatus);
-router.get("/check-unique", checkUnique);
-router.post("/verify-profile", verifyProfile);
-router.get("/reset-password", getPasswordResetId);
-router.post("/reset-password", resetPassword);
+const router = express.Router();
 
-module.exports = router;
+router.post('/sign-up', validateSignUp, signUp);
+router.post('/sign-in', validateSignIn, signIn);
+router.post('/sign-out', isAuthenticated, signOut);
+router.get('/check-signed-in-status', isAuthenticated, checkLoggedInStatus);
+router.get('/check-unique', checkUnique);
+router.post('/verify-profile', verifyProfile);
+router.get('/reset-password', getPasswordResetId);
+router.post('/reset-password', resetPassword);
+
+export default router;

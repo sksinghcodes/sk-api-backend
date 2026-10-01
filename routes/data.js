@@ -1,10 +1,11 @@
-const router = require("express").Router();
-const cors = require("cors");
+import express from 'express';
+import cors from 'cors';
+import { create, getAll, remove } from '../controllers/data';
 
-const { create, getAll, remove } = require("../controllers/data");
+const router = express.Router();
 
-router.post("/", cors(), create);
-router.get("/get-all/:dataSourceId", getAll);
-router.delete("/:id", remove);
+router.post('/', cors(), create);
+router.get('/get-all/:dataSourceId', getAll);
+router.delete('/:id', remove);
 
-module.exports = router;
+export default router;

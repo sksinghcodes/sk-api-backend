@@ -1,42 +1,42 @@
-const { Schema, model } = require("mongoose");
-const {
+import { Schema, model } from 'mongoose';
+import {
   RECURRENCE_ENUM,
   INVALID_DATE_STRATEGY_ENUM,
-  autoRemove_ENUM,
+  AUTO_REMOVE_ENUM,
   CATEGORY_ENUM,
-  SCHEDULE_ENUM,
-} = require("../constants");
+  SCHEDULE_ENUM
+} from '../constants';
 
 const taskSchema = new Schema(
   {
     userId: {
       type: Schema.Types.ObjectId,
-      ref: "User",
-      required: true,
+      ref: 'User',
+      required: true
     },
     name: { type: String, required: true, minlength: 1, maxlength: 100 },
     description: {
       type: String,
       default: null,
-      set: (v) => (v === "" ? null : v),
-      maxlength: 500,
+      set: (v) => (v === '' ? null : v),
+      maxlength: 500
     },
 
     category: {
       type: String,
       enum: CATEGORY_ENUM,
-      required: true,
+      required: true
     },
 
     recurrence: {
       type: String,
       enum: RECURRENCE_ENUM,
-      required: true,
+      required: true
     },
     recurrenceValues: {
       type: [Number],
       default: null,
-      set: (v) => (Array.isArray(v) && v.length === 0 ? null : v),
+      set: (v) => (Array.isArray(v) && v.length === 0 ? null : v)
     },
     recurrenceInvalidDateStrategy: {
       type: String,
@@ -46,38 +46,38 @@ const taskSchema = new Schema(
           return v === null || INVALID_DATE_STRATEGY_ENUM.includes(v);
         },
         message: (props) =>
-          `${props.value} is not a valid recurrenceInvalidDateStrategy`,
-      },
+          `${props.value} is not a valid recurrenceInvalidDateStrategy`
+      }
     },
 
     schedule: {
       type: String,
       enum: SCHEDULE_ENUM,
-      required: true,
+      required: true
     },
     scheduleStartTime: { type: Number, default: null },
     scheduleEndTime: { type: Number, default: null },
 
     autoRemove: {
       type: String,
-      enum: autoRemove_ENUM,
-      required: true,
+      enum: AUTO_REMOVE_ENUM,
+      required: true
     },
     autoRemoveDate: { type: Number, default: null },
     deleted: {
       type: Boolean,
-      default: false,
+      default: false
     },
     allowEdit: {
       type: Boolean,
-      default: true,
+      default: true
     },
     taskRecord: {
       type: Object,
-      default: null,
-    },
+      default: null
+    }
   },
   { timestamps: true }
 );
 
-module.exports = model("Task", taskSchema);
+export default model('Task', taskSchema);

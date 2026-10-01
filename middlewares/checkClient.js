@@ -1,6 +1,6 @@
-const cors = require("cors");
+import cors from 'cors';
 
-module.exports = cors({
+export default cors({
   credentials: true,
-  origin: process.env.ALLOWED_CLIENT.split(" "),
+  origin: process.env.ALLOWED_CLIENT.split(' ')
 });

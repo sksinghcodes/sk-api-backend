@@ -1,51 +1,51 @@
-const user = require("../models/user");
+import user from '../models/user';
 
-exports.validateSignUp = async (req, res, next) => {
+export const validateSignUp = async (req, res, next) => {
   const signUpData = req.body;
 
   const validationRules = {
     username: [
-      { function: "isRequired" },
-      { function: "noSpaces" },
-      { function: "checkLength", args: [2, 30] },
-      { function: "isUsername" },
+      { function: 'isRequired' },
+      { function: 'noSpaces' },
+      { function: 'checkLength', args: [2, 30] },
+      { function: 'isUsername' }
     ],
     email: [
-      { function: "isRequired" },
-      { function: "noSpaces" },
-      { function: "isEmail" },
+      { function: 'isRequired' },
+      { function: 'noSpaces' },
+      { function: 'isEmail' }
     ],
     password: [
-      { function: "isRequired" },
-      { function: "noSpaces" },
-      { function: "checkLength", args: [6, 30] },
-      { function: "isPassword" },
+      { function: 'isRequired' },
+      { function: 'noSpaces' },
+      { function: 'checkLength', args: [6, 30] },
+      { function: 'isPassword' }
     ],
     confirmPassword: [
-      { function: "isRequired" },
-      { function: "isSameAsPassword", args: [signUpData.password] },
-    ],
+      { function: 'isRequired' },
+      { function: 'isSameAsPassword', args: [signUpData.password] }
+    ]
   };
 
   const signUpValidation = {
     username: {
-      errorMessage: "",
+      errorMessage: '',
       isValid: false,
-      isUnique: false,
+      isUnique: false
     },
     email: {
-      errorMessage: "",
+      errorMessage: '',
       isValid: false,
-      isUnique: false,
+      isUnique: false
     },
     password: {
-      errorMessage: "",
-      isValid: false,
+      errorMessage: '',
+      isValid: false
     },
     confirmPassword: {
-      errorMessage: "",
-      isValid: false,
-    },
+      errorMessage: '',
+      isValid: false
+    }
   };
 
   for (const [key, validations] of Object.entries(validationRules)) {
@@ -92,28 +92,28 @@ exports.validateSignUp = async (req, res, next) => {
     res.json({
       success: false,
       validation: signUpValidation,
-      values: signUpData,
+      values: signUpData
     });
   }
 };
 
-exports.validateSignIn = (req, res, next) => {
+export const validateSignIn = (req, res, next) => {
   const signInData = req.body;
 
   const validationRules = {
-    usernameOrEmail: [{ function: "isRequired" }],
-    password: [{ function: "isRequired" }],
+    usernameOrEmail: [{ function: 'isRequired' }],
+    password: [{ function: 'isRequired' }]
   };
 
   const signInValidation = {
     usernameOrEmail: {
-      errorMessage: "",
-      isValid: false,
+      errorMessage: '',
+      isValid: false
     },
     password: {
-      errorMessage: "",
-      isValid: false,
-    },
+      errorMessage: '',
+      isValid: false
+    }
   };
 
   for (const [key, validations] of Object.entries(validationRules)) {
@@ -145,32 +145,34 @@ exports.validateSignIn = (req, res, next) => {
     res.json({
       success: false,
       validation: signInValidation,
-      values: signInData,
+      values: signInData
     });
   }
 };
 
 const validationFunctions = {
   isRequired: function (value) {
-    return !!value.trim() ? "" : "This field is required";
+    return typeof value === 'string' && value.trim()
+      ? ''
+      : 'This field is required';
   },
   checkLength: function (value, min, max) {
     return value.trim().length >= min && value.trim().length <= max
-      ? ""
+      ? ''
       : `Input must be minimum ${min} and maximum ${max} characters in length`;
   },
   noSpaces: function (value) {
-    return !value.includes(" ") ? "" : `Input must not contain spaces`;
+    return !value.includes(' ') ? '' : `Input must not contain spaces`;
   },
   isUsername: function (value) {
     return /^[a-zA-Z0-9_.]+$/.test(value)
-      ? ""
+      ? ''
       : `Only alphanumeric characters {A-Z, a-z, 0-9}, underscore {_}, and period {.} are allowed`;
   },
   isEmail: function (value) {
     return /^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$/.test(value)
-      ? ""
-      : "Enter a valid email address";
+      ? ''
+      : 'Enter a valid email address';
   },
   isPassword: function (value) {
     let hasNumeric = false;
@@ -192,10 +194,10 @@ const validationFunctions = {
       [63, 64], // ?@
       [91, 91], // [
       [93, 96], // ]^_`
-      [126, 126], // ~
+      [126, 126] // ~
     ];
 
-    value.split("").forEach((char) => {
+    value.split('').forEach((char) => {
       let isNumeric = false;
       let isUppercase = false;
       let isLowercase = false;
@@ -241,17 +243,17 @@ const validationFunctions = {
 
     if (hasInvalidChar) {
       return `Password has invalid character${
-        invalidChars.length ? "s" : ""
-      }: ${invalidChars.join(" ")}`;
+        invalidChars.length ? 's' : ''
+      }: ${invalidChars.join(' ')}`;
     }
 
     if (!hasNumeric || !hasUppercase || !hasLowercase || !hasSpecial) {
-      return "Password must contain at least one uppercase letter {A-Z}, at least one lowercase letter {a-z}, at least one digit {0-9}, and at least one special character from !#$&()*+_.=?@[]^_`~";
+      return 'Password must contain at least one uppercase letter {A-Z}, at least one lowercase letter {a-z}, at least one digit {0-9}, and at least one special character from !#$&()*+_.=?@[]^_`~';
     }
 
-    return "";
+    return '';
   },
   isSameAsPassword: function (value, password) {
-    return value === password ? "" : "Passwords do not match";
-  },
+    return value === password ? '' : 'Passwords do not match';
+  }
 };

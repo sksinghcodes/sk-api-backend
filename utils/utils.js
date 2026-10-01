@@ -1,4 +1,4 @@
-exports.getDateDetails = (date) => {
+export const getDateDetails = (date) => {
   let isLastDate = false;
   let getMonthlyTasksFrom = [];
   let getYearlyTasksFrom = [];
@@ -28,18 +28,18 @@ exports.getDateDetails = (date) => {
     yearlyDate,
     getMonthlyTasksFrom,
     getYearlyTasksFrom,
-    nextDate,
+    nextDate
   };
 };
 
-exports.validateDate = (dateStr) => {
-  const [y, m, d] = dateStr.split("_");
+export const validateDate = (dateStr) => {
+  const [y, m, d] = dateStr.split('_');
   const [yn, mn, dn] = [Number(y), Number(m), Number(d)];
   const isValidDate = dn >= 1 && dn <= 31;
   const isValidMonth = mn >= 1 && mn <= 12;
 
   if (
-    typeof dateStr !== "string" ||
+    typeof dateStr !== 'string' ||
     dateStr.length !== 10 ||
     y.length !== 4 ||
     m.length !== 2 ||
@@ -50,7 +50,7 @@ exports.validateDate = (dateStr) => {
   ) {
     return {
       isValid: false,
-      message: "Invalid format. Expected YYYY_MM_DD",
+      message: 'Invalid format. Expected YYYY_MM_DD'
     };
   }
 
@@ -63,12 +63,12 @@ exports.validateDate = (dateStr) => {
   ) {
     return {
       isValid: false,
-      message: "Invalid calendar date",
+      message: 'Invalid calendar date'
     };
   }
 
   return {
     isValid: true,
-    date,
+    date
   };
 };

@@ -1,11 +1,11 @@
-const { Schema, model } = require("mongoose");
+import { Schema, model } from 'mongoose';
 
-const Purpose = {
+export const Purpose = {
   PROFILE_VERIFICATION: 0,
-  PASSWORD_RESET: 1,
+  PASSWORD_RESET: 1
 };
 
-const nextTenMinutes = () => {
+export const nextTenMinutes = () => {
   return new Date(Date.now() + 1000 * 60 * 10);
 };
 
@@ -13,24 +13,24 @@ const confirmationCodeSchema = new Schema({
   code: {
     type: String,
     default: String(Math.floor(Math.random() * (999999 - 100000 + 1) + 100000)),
-    required: true,
+    required: true
   },
   expirationDate: {
     type: Date,
-    required: true,
+    required: true
   },
   purpose: {
     type: Number,
     enum: [Purpose.PROFILE_VERIFICATION, Purpose.PASSWORD_RESET],
-    required: true,
+    required: true
   },
   userId: {
     type: String,
-    required: true,
-  },
+    required: true
+  }
 });
 
-const ConfirmationCodeModel = model("ConfirmationCode", confirmationCodeSchema);
+const ConfirmationCodeModel = model('ConfirmationCode', confirmationCodeSchema);
 ConfirmationCodeModel.Purpose = Purpose;
 ConfirmationCodeModel.nextTenMinutes = nextTenMinutes;
-module.exports = ConfirmationCodeModel;
+export default ConfirmationCodeModel;

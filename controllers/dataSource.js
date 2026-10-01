@@ -1,8 +1,8 @@
-const DataSource = require("../models/dataSource");
-const Data = require("../models/data");
-const jwt = require("jsonwebtoken");
+import DataSource from '../models/dataSource';
+import Data from '../models/data';
+import jwt from 'jsonwebtoken';
 
-exports.create = (req, res) => {
+export const create = (req, res) => {
   const dataSource = new DataSource(req.body);
   dataSource.userId = req.userId;
   const key = jwt.sign(
@@ -15,73 +15,73 @@ exports.create = (req, res) => {
     .save()
     .then(() => {
       return DataSource.find({ userId: req.userId }).select([
-        "-userId",
-        "-updatedAt",
-        "-__v",
+        '-userId',
+        '-updatedAt',
+        '-__v'
       ]);
     })
     .then((dataSources) => {
       res.json({
         success: true,
-        message: "New data-source added",
-        dataSources: dataSources,
+        message: 'New data-source added',
+        dataSources: dataSources
       });
     })
     .catch((err) => {
       res.json({
         success: false,
-        message: err,
+        message: err
       });
     });
 };
 
-exports.getAll = (req, res) => {
+export const getAll = (req, res) => {
   DataSource.find({ userId: req.userId })
-    .select(["-userId", "-updatedAt", "-__v"])
+    .select(['-userId', '-updatedAt', '-__v'])
     .then((dataSources) => {
       res.json({
         success: true,
-        dataSources: dataSources,
+        dataSources: dataSources
       });
     })
     .catch((err) => {
       console.log(err);
       res.json({
         success: false,
-        error: err,
+        error: err
       });
     });
 };
 
-exports.remove = (req, res) => {
+export const remove = (req, res) => {
   Promise.all([
     DataSource.findOneAndDelete({ userId: req.userId, _id: req.params.id }),
-    Data.deleteMany({ userId: req.userId, dataSourceId: req.params.id }),
+    Data.deleteMany({ userId: req.userId, dataSourceId: req.params.id })
   ])
     .then(async (result) => {
       const dataSources = await DataSource.find({ userId: req.userId }).select([
-        "-userId",
-        "-updatedAt",
-        "-__v",
+        '-userId',
+        '-updatedAt',
+        '-__v'
       ]);
 
       if ((result[0], result[1].acknowledged)) {
         res.json({
           success: true,
-          message: "Datasource deleted successfully",
-          dataSources: dataSources,
+          message: 'Datasource deleted successfully',
+          dataSources: dataSources
         });
       } else {
         res.json({
           success: false,
-          error: "Something went wrong",
+          error: 'Something went wrong'
         });
       }
     })
     .catch((error) => {
       res.json({
         success: false,
-        error: error,
+        error: error
       });
     });
 };

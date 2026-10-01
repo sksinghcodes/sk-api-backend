@@ -1,8 +1,10 @@
-const router = require("express").Router();
-const { create, getAll, remove } = require("../controllers/dataSource");
+import express from 'express';
+import { create, getAll, remove } from '../controllers/dataSource';
 
-router.post("/", create);
-router.get("/get-all", getAll);
-router.delete("/:id", remove);
+const router = express.Router();
 
-module.exports = router;
+router.post('/', create);
+router.get('/get-all', getAll);
+router.delete('/:id', remove);
+
+export default router;

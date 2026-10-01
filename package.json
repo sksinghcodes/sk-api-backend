@@ -2,23 +2,41 @@
   "name": "sk-api-backend",
   "version": "1.0.0",
   "description": "",
-  "main": "app.js",
+  "main": "server.js",
   "scripts": {
-    "start": "node app.js",
-    "dev": "nodemon app.js",
-    "test": "echo \"Error: no test specified\" && exit 1"
+    "start": "tsx server.js",
+    "test": "vitest",
+    "test:coverage": "vitest --coverage",
+    "dev": "nodemon --exec tsx server.js",
+    "prepare": "husky",
+    "format": "prettier --write .",
+    "format:check": "prettier --check ."
   },
   "author": "sksinghcodes@gmail.com",
   "license": "ISC",
+  "type": "module",
   "dependencies": {
-    "bcrypt": "^5.0.1",
+    "bcrypt": "^6.0.0",
     "cookie-parser": "^1.4.6",
     "cors": "^2.8.5",
     "dotenv": "^16.0.1",
     "express": "^4.18.1",
-    "jsonwebtoken": "^8.5.1",
-    "mongoose": "^6.3.6",
-    "nodemailer": "^6.9.1",
-    "nodemon": "^2.0.16"
+    "jsonwebtoken": "^9.0.3",
+    "mongoose": "^9.10.1",
+    "nodemailer": "^10.0.10",
+    "nodemon": "^3.1.14"
+  },
+  "devDependencies": {
+    "@vitest/coverage-v8": "^5.0.3",
+    "dotenv-cli": "^11.0.0",
+    "husky": "^9.1.7",
+    "prettier": "^3.9.9",
+    "supertest": "^7.2.2",
+    "tsx": "^4.23.15",
+    "vitest": "^5.0.1"
+  },
+  "allowScripts": {
+    "bcrypt@6.0.0": true,
+    "esbuild@0.28.2": true
   }
 }

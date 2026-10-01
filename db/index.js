@@ -1,25 +1,25 @@
-const mongoose = require("mongoose");
+import mongoose from 'mongoose';
 
-exports.connectToDB = async function () {
-  return await mongoose
-    .connect(process.env.DB_CONNECTION_STRING)
-    .then(() => {
-      console.log("Database connection successfull");
-    })
-    .catch(() => {
-      console.log("Database connection failed");
-    });
+export const connectToDB = async function () {
+  try {
+    await mongoose.connect(process.env.DB_CONNECTION_STRING);
+    console.log('Database connection successful');
+  } catch (e) {
+    console.log(e);
+    console.log('Database connection failed');
+    throw e;
+  }
 };
 
-exports.checkDBConnection = function (req, res, next) {
+export const checkDBConnection = function (req, res, next) {
   if (mongoose.connection._readyState === 1) {
     next();
   } else {
     res.json({
       success: false,
       error: {
-        message: "Database connection issue",
-      },
+        message: 'Database connection issue'
+      }
     });
   }
 };

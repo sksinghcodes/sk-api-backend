@@ -1,7 +1,8 @@
-const router = require("express").Router();
+import express from 'express';
+import { create } from '../controllers/data';
 
-const { create } = require("../controllers/data");
+const router = express.Router();
 
-router.post("/", create);
+router.post('/', create);
 
-module.exports = router;
+export default router;

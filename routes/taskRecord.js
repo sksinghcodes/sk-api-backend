@@ -1,8 +1,10 @@
-const router = require("express").Router();
-const { create, getByDate, update } = require("../controllers/taskRecord");
+import express from 'express';
+import { create, getByDate, update } from '../controllers/taskRecord';
 
-router.post("/create", create);
-router.patch("/update", update);
-router.get("/by-date", getByDate);
+const router = express.Router();
 
-module.exports = router;
+router.post('/create', create);
+router.patch('/update', update);
+router.get('/by-date', getByDate);
+
+export default router;

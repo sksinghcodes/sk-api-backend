@@ -1,18 +1,20 @@
-const router = require("express").Router();
-const {
+import express from 'express';
+import {
   create,
   getOne,
   getByDate,
   getAll,
   removeTask,
-  update,
-} = require("../controllers/task");
+  update
+} from '../controllers/task';
 
-router.post("/create", create);
-router.patch("/update", update);
-router.get("/get-one", getOne);
-router.get("/get-all", getAll);
-router.get("/get-by-date", getByDate);
-router.delete("/delete", removeTask);
+const router = express.Router();
 
-module.exports = router;
+router.post('/create', create);
+router.patch('/update', update);
+router.get('/get-one', getOne);
+router.get('/get-all', getAll);
+router.get('/get-by-date', getByDate);
+router.delete('/delete', removeTask);
+
+export default router;
